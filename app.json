@@ -20,8 +20,8 @@
  "min_price": 4,
  "top_sellers": {
   "enabled": true,
-  "days": 30,
-  "count": 30,
+  "days": 50,
+  "count": 50,
   "min_qty": 3,
   "sources": [
    "pos",
