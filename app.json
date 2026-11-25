@@ -16,7 +16,18 @@
  "show_qty": false,
  "goatcounter": "",
  "umami": "bfb1f154-f0eb-427d-ab0e-cc1a32c78a31",
+ "product_pages": true,
  "min_price": 4,
+ "top_sellers": {
+  "enabled": true,
+  "days": 30,
+  "count": 30,
+  "min_qty": 3,
+  "sources": [
+   "pos",
+   "sale"
+  ]
+ },
  "only_pos": true,
  "hide_no_image": true,
  "hide_out_of_stock": true,
@@ -30,5 +41,5 @@
  "recent_source": [
   "purchase"
  ],
- "updated": "2026-11-25T20:53:13Z"
+ "updated": "2026-11-25T21:49:50Z"
 }

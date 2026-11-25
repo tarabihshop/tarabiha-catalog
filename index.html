@@ -57,6 +57,7 @@ header .t{flex:1;line-height:1.2}header .t b{font-size:21px;display:block}header
 .imgbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--field)}
 .fv{position:absolute;bottom:6px;left:6px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.92);font-size:18px;line-height:36px;text-align:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
 .new{position:absolute;top:6px;right:6px;background:var(--amber);color:#1F2937;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
+.bs{position:absolute;bottom:6px;right:6px;background:#FFF3CD;color:#7a5200;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
 .off{position:absolute;top:6px;left:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
 .old{color:#9CA3AF;text-decoration:line-through;font-weight:600;font-size:12px;margin-left:6px}
 .nm{font-weight:700;font-size:14px;margin-top:8px;line-height:1.35;height:2.7em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
@@ -121,7 +122,7 @@ input.f,textarea.f{width:100%;border:0;background:#fff;border-radius:14px;paddin
   <div style="display:flex;align-items:center;gap:8px;padding-bottom:6px">
     <div id="count" style="flex:1"></div>
     <select id="sort" style="background:#fff;border:0;border-radius:12px;padding:6px 10px;font-size:13px;font-family:inherit;color:var(--brand);font-weight:700">
-      <option value="">الترتيب: الافتراضي</option><option value="new">الأحدث</option><option value="low">الأرخص</option><option value="high">الأغلى</option>
+      <option value="">الترتيب: الافتراضي</option><option value="new">الأحدث</option><option value="top">الأكثر مبيعًا</option><option value="low">الأرخص</option><option value="high">الأغلى</option>
     </select>
   </div>
   <div id="grid"></div>
@@ -140,7 +141,7 @@ const DEF = {store:'طرابيه', sub:'للأدوات المنزلية',
   banner:'🚚 توصيل مجاني لأي فاتورة أكتر من 600 جنيه داخل جمصة', free_over:600,
   free_text:'🎉 توصيل مجاني داخل جمصة', hint_text:'🚚 ضيف {n} ج كمان ويبقى التوصيل مجاني داخل جمصة',
   whatsapp:'', wa_link:'https://wa.me/message/NO6AHUKPPHO3L1', show_price:true, min_price:4, new_days:14,
-  low_stock:5, limit_to_stock:true, notice:'', offers_first:true, show_qty:true};
+  low_stock:5, limit_to_stock:true, notice:'', offers_first:true, show_qty:true, product_pages:true};
 let CFG = Object.assign({}, DEF), P = [], byId = {}, cart = [], cat = '', q = '', size = '', shown = 0, curList = [], sortMode = '', extra = {phone: '', addr: ''};
 const PAGE = 60;
 const SIZE_RANGES = [
@@ -212,17 +213,18 @@ const imgUrl = (p, k) => k + '/' + p.id + '.jpg?v=' + h(p.w);
 function card(p) {
   const s = stock(p.q);
   return '<div class="card" data-id="' + p.id + '"><div class="imgbox"><img loading="lazy" decoding="async" alt="" src="' + imgUrl(p, 't') + '">' +
-    (p.isNew ? '<span class="new">🆕 جديد</span>' : '') + (p.off ? '<span class="off">🔥 عرض -' + p.disc + '%</span>' : '') + '<button class="fv" aria-label="مفضلة" data-fv="' + p.id + '">' + (favs.has(p.id) ? '❤️' : '🤍') + '</button></div><div class="nm">' + esc(p.n) + '</div>' +
+    (p.isNew ? '<span class="new">🆕 جديد</span>' : '') + (p.off ? '<span class="off">🔥 عرض -' + p.disc + '%</span>' : '') + (p.bs ? '<span class="bs">🏆 الأكثر مبيعًا</span>' : '') + '<button class="fv" aria-label="مفضلة" data-fv="' + p.id + '">' + (favs.has(p.id) ? '❤️' : '🤍') + '</button></div><div class="nm">' + esc(p.n) + '</div>' +
     priceHtml(p) +
     '<span class="chip ' + s[1] + '">' + s[0] + '</span>' +
     (p.v.length > 1 ? '<div class="mut">📏 ' + esc(sizeList(p)) + '</div>' : '') + '</div>';
 }
 function renderGrid() {
-  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : cat === '__fav__' ? favs.has(p.id) : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
+  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : cat === '__fav__' ? favs.has(p.id) : cat === '__top__' ? !!p.bs : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
   if (sortMode) {
     const mp = p => Math.min.apply(null, p.v.map(x => x.p));
-    curList.sort(sortMode === 'low' ? (a, b) => mp(a) - mp(b) : sortMode === 'high' ? (a, b) => mp(b) - mp(a) : (a, b) => String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
+    curList.sort(sortMode === 'low' ? (a, b) => mp(a) - mp(b) : sortMode === 'high' ? (a, b) => mp(b) - mp(a) : sortMode === 'top' ? (a, b) => (a.bs || 9999) - (b.bs || 9999) : (a, b) => String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
   }
+  if (cat === '__top__' && !sortMode) curList.sort((a, b) => a.bs - b.bs);
   shown = Math.min(PAGE, curList.length);
   $('#grid').innerHTML = curList.slice(0, shown).map(card).join('');
   $('#count').textContent = curList.length + ' منتج' + (CFG.updated && fmtUpd(CFG.updated) ? ' • آخر تحديث: ' + fmtUpd(CFG.updated) : '');
@@ -236,9 +238,9 @@ function loadMore() {
   shown = to;
 }
 function renderChips() {
-  const cats = [''].concat(favN() ? ['__fav__'] : [], P.some(p => p.off) ? ['__offers__'] : [], Array.from(new Set(P.map(p => p.g))).sort());
+  const cats = [''].concat(favN() ? ['__fav__'] : [], P.some(p => p.bs) ? ['__top__'] : [], P.some(p => p.off) ? ['__offers__'] : [], Array.from(new Set(P.map(p => p.g))).sort());
   if (cats.indexOf(cat) < 0) cat = '';
-  $('#chips').innerHTML = cats.map(c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + (c === '__fav__' ? '❤️ المفضلة (' + favN() + ')' : c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل') + '</button>').join('');
+  $('#chips').innerHTML = cats.map(c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + (c === '__fav__' ? '❤️ المفضلة (' + favN() + ')' : c === '__top__' ? '🏆 الأكثر مبيعًا' : c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل') + '</button>').join('');
 }
 
 /* ---------- النافذة السفلية ---------- */
@@ -302,7 +304,8 @@ function openProduct(id) {
 }
 
 async function shareProduct(p) {
-  const url = location.origin + location.pathname + '#p=' + p.id;
+  track('share/' + p.id, p.n);
+  const url = CFG.product_pages === false ? location.origin + location.pathname + '#p=' + p.id : new URL('p/' + p.id + '.html', location.href.split('#')[0]).href;
   const text = p.n + (CFG.show_price ? ' - ' + priceText(p) : '');
   if (navigator.share) { try { await navigator.share({title: CFG.store, text: text, url: url}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
   try { await navigator.clipboard.writeText(text + '\n' + url); toast('✔ اتنسخ رابط المنتج'); }
