@@ -14,6 +14,8 @@
  "limit_to_stock": true,
  "notice": "",
  "show_qty": true,
+ "goatcounter": "",
+ "umami": "",
  "min_price": 4,
  "only_pos": true,
  "hide_no_image": true,
