@@ -55,6 +55,7 @@ header .t{flex:1;line-height:1.2}header .t b{font-size:21px;display:block}header
 .imgbox{position:relative;aspect-ratio:1/1;background:var(--field);border-radius:14px;overflow:hidden}
 .imgbox::before{content:'🏠';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px;opacity:.25}
 .imgbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--field)}
+.fv{position:absolute;bottom:6px;left:6px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.92);font-size:18px;line-height:36px;text-align:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
 .new{position:absolute;top:6px;right:6px;background:var(--amber);color:#1F2937;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
 .off{position:absolute;top:6px;left:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
 .old{color:#9CA3AF;text-decoration:line-through;font-weight:600;font-size:12px;margin-left:6px}
@@ -153,6 +154,8 @@ const SIZE_RANGES = [
 ];
 try { cart = JSON.parse(localStorage.getItem('tb_cart') || '[]'); } catch (e) { cart = []; }
 try { Object.assign(extra, JSON.parse(localStorage.getItem('tb_extra') || '{}')); } catch (e) {}
+let favs = new Set();
+try { favs = new Set(JSON.parse(localStorage.getItem('tb_fav') || '[]')); } catch (e) {}
 const saveCart = () => { try { localStorage.setItem('tb_cart', JSON.stringify(cart)); } catch (e) {} renderBar(); };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => { const r = Math.round(n * 10) / 10; return r % 1 === 0 ? String(Math.round(r)) : r.toFixed(1); };
@@ -209,13 +212,13 @@ const imgUrl = (p, k) => k + '/' + p.id + '.jpg?v=' + h(p.w);
 function card(p) {
   const s = stock(p.q);
   return '<div class="card" data-id="' + p.id + '"><div class="imgbox"><img loading="lazy" decoding="async" alt="" src="' + imgUrl(p, 't') + '">' +
-    (p.isNew ? '<span class="new">🆕 جديد</span>' : '') + (p.off ? '<span class="off">🔥 عرض -' + p.disc + '%</span>' : '') + '</div><div class="nm">' + esc(p.n) + '</div>' +
+    (p.isNew ? '<span class="new">🆕 جديد</span>' : '') + (p.off ? '<span class="off">🔥 عرض -' + p.disc + '%</span>' : '') + '<button class="fv" aria-label="مفضلة" data-fv="' + p.id + '">' + (favs.has(p.id) ? '❤️' : '🤍') + '</button></div><div class="nm">' + esc(p.n) + '</div>' +
     priceHtml(p) +
     '<span class="chip ' + s[1] + '">' + s[0] + '</span>' +
     (p.v.length > 1 ? '<div class="mut">📏 ' + esc(sizeList(p)) + '</div>' : '') + '</div>';
 }
 function renderGrid() {
-  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
+  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : cat === '__fav__' ? favs.has(p.id) : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
   if (sortMode) {
     const mp = p => Math.min.apply(null, p.v.map(x => x.p));
     curList.sort(sortMode === 'low' ? (a, b) => mp(a) - mp(b) : sortMode === 'high' ? (a, b) => mp(b) - mp(a) : (a, b) => String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
@@ -233,9 +236,9 @@ function loadMore() {
   shown = to;
 }
 function renderChips() {
-  const cats = [''].concat(P.some(p => p.off) ? ['__offers__'] : [], Array.from(new Set(P.map(p => p.g))).sort());
+  const cats = [''].concat(favN() ? ['__fav__'] : [], P.some(p => p.off) ? ['__offers__'] : [], Array.from(new Set(P.map(p => p.g))).sort());
   if (cats.indexOf(cat) < 0) cat = '';
-  $('#chips').innerHTML = cats.map(c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + (c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل') + '</button>').join('');
+  $('#chips').innerHTML = cats.map(c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + (c === '__fav__' ? '❤️ المفضلة (' + favN() + ')' : c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل') + '</button>').join('');
 }
 
 /* ---------- النافذة السفلية ---------- */
@@ -270,7 +273,7 @@ function openProduct(id) {
   openSheet('<div class="bigbox"><img id="bigimg" alt="" src="' + imgUrl(p, 't') + '"></div><h2>' + esc(p.n) + '</h2><div id="dstock"></div>' +
     (CFG.show_price ? '<div id="dprice" class="pr big"></div>' : '') +
     (sizes ? '<div class="sec">📏 اختر المقاس / الخيار</div><div class="sizes" id="sizes"></div>' : '') +
-    '<div class="qrow"><span>الكمية</span><button id="qm">−</button><b id="qv">1</b><button id="qp">+</button></div><button class="btn main" id="add">🛒 أضف للطلب</button><button class="btn img" id="shr">🔗 شارك المنتج</button>');
+    '<div class="qrow"><span>الكمية</span><button id="qm">−</button><b id="qv">1</b><button id="qp">+</button></div><button class="btn main" id="add">🛒 أضف للطلب</button><button class="btn img" id="shr">🔗 شارك المنتج</button><button class="btn img" id="fvb">' + (favs.has(p.id) ? '❤️ في المفضلة (إزالة)' : '🤍 أضف للمفضلة') + '</button>');
   const big = new Image(); big.onload = () => { const el = $('#bigimg'); if (el) el.src = big.src; }; big.src = imgUrl(p, 'm');
   const maxQ = () => CFG.limit_to_stock ? Math.floor(p.v[sel].q) : 999;
   function refresh() {
@@ -288,6 +291,7 @@ function openProduct(id) {
     else if (b.id === 'qm') { qty = Math.max(1, qty - 1); refresh(); }
     else if (b.id === 'qp') { qty = Math.min(Math.max(1, maxQ()), qty + 1); refresh(); }
     else if (b.id === 'shr') { shareProduct(p); }
+    else if (b.id === 'fvb') { toggleFav(p.id); b.textContent = favs.has(p.id) ? '❤️ في المفضلة (إزالة)' : '🤍 أضف للمفضلة'; }
     else if (b.id === 'add') {
       const v = p.v[sel], ex = cart.find(l => l.id === p.id && l.l === v.l), cap = maxQ();
       if (ex) ex.q = Math.min(cap, ex.q + qty); else cart.push({id: p.id, l: v.l, q: qty, n: p.n, p: v.p, o: v.o > v.p ? v.o : 0, w: p.w});
@@ -305,6 +309,24 @@ async function shareProduct(p) {
   catch (e) { window.open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank'); }
 }
 function openFromHash() { const m = /#p=(\d+)/.exec(location.hash); if (m && byId[+m[1]]) openProduct(+m[1]); }
+
+/* ---------- المفضلة (على جهاز العميل) ---------- */
+const favN = () => Array.from(favs).filter(id => byId[id]).length;
+function saveFavs() { try { localStorage.setItem('tb_fav', JSON.stringify(Array.from(favs))); } catch (e) {} }
+function updFavUi(id) {
+  const on = favs.has(id), wasFav = cat === '__fav__';
+  document.querySelectorAll('.fv[data-fv="' + id + '"]').forEach(b => { b.textContent = on ? '❤️' : '🤍'; });
+  if (wasFav && !favN()) cat = '';
+  const had = !!document.querySelector('.chip-c[data-c="__fav__"]');
+  if (had !== (favN() > 0) || wasFav) renderChips();
+  else { const fc = document.querySelector('.chip-c[data-c="__fav__"]'); if (fc) fc.textContent = '❤️ المفضلة (' + favN() + ')'; }
+  if (wasFav) renderGrid();
+}
+function toggleFav(id) {
+  if (favs.has(id)) favs.delete(id);
+  else { favs.add(id); track('fav/' + id, byId[id] && byId[id].n); toast('❤️ اتضاف للمفضلة'); }
+  saveFavs(); updFavUi(id);
+}
 
 /* ---------- الإحصائيات (اختياري: بتشتغل لو حطيت goatcounter أو umami في config.json > app) ---------- */
 function initStats() {
@@ -548,7 +570,7 @@ async function init() {
   } catch (e) { $('#empty').style.display = 'block'; $('#empty').textContent = 'تعذر تحميل الكتالوج - اتأكد من النت وجرّب تاني'; }
   if (CFG.notice && localStorage.getItem('tb_notice') !== h(CFG.notice)) { try { localStorage.setItem('tb_notice', h(CFG.notice)); } catch (e) {} setTimeout(() => alert(CFG.notice), 400); }
 }
-$('#grid').addEventListener('click', e => { const c = e.target.closest('.card'); if (c) openProduct(+c.dataset.id); });
+$('#grid').addEventListener('click', e => { const f = e.target.closest('.fv'); if (f) { toggleFav(+f.dataset.fv); return; } const c = e.target.closest('.card'); if (c) openProduct(+c.dataset.id); });
 $('#grid').addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.style.display = 'none'; }, true);
 $('#sizechips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { size = size === b.dataset.s ? '' : b.dataset.s; renderSizes(); renderGrid(); } });
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { cat = b.dataset.c; renderChips(); renderGrid(); } });
