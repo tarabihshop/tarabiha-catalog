@@ -336,8 +336,9 @@ function openCart() {
 }
 
 /* ---------- الفاتورة كصورة ---------- */
-function buildInvoice(name, note) {
+function buildInvoice(name, note, imgs) {
   const W = 900, pad = 36, FONT = '"Segoe UI",Tahoma,Arial,sans-serif';
+  const IMG = 120, GAP = 16; /* حجم صورة المنتج في الفاتورة */
   function wrap(ctx, text, maxW) {
     const words = String(text).split(/\s+/), lines = []; let cur = '';
     words.forEach(w => { const t = cur ? cur + ' ' + w : w; if (ctx.measureText(t).width > maxW && cur) { lines.push(cur); cur = w; } else cur = t; });
@@ -358,11 +359,22 @@ function buildInvoice(name, note) {
     y += 4; bar(y, '#e5e7eb', 3); y += 36;
     cart.forEach((l, i) => {
       ctx.font = 'bold 30px ' + FONT;
-      const ls = wrap(ctx, (i + 1) + ') ' + l.n, W - 2 * pad - 270), top = y;
-      ls.forEach(ln => { T(ln, R, y, 'bold 30px ' + FONT, '#111'); y += 40; });
-      if (l.l) { T('المقاس: ' + l.l, R, y, '25px ' + FONT, '#666'); y += 36; }
+      const TX = imgs ? R - IMG - GAP : R; /* حافة النص اليمنى (بعد الصورة) */
+      const ls = wrap(ctx, (i + 1) + ') ' + l.n, TX - L - 270), top = y;
+      if (imgs && !dry) {
+        const bx = R - IMG, by = top - 30;
+        ctx.fillStyle = '#EFEDE7'; ctx.fillRect(bx, by, IMG, IMG);
+        const im = imgs[l.id];
+        if (im) {
+          const sc = Math.min(IMG / im.width, IMG / im.height), iw = im.width * sc, ih = im.height * sc;
+          ctx.drawImage(im, bx + (IMG - iw) / 2, by + (IMG - ih) / 2, iw, ih);
+        }
+      }
+      ls.forEach(ln => { T(ln, TX, y, 'bold 30px ' + FONT, '#111'); y += 40; });
+      if (l.l) { T('المقاس: ' + l.l, TX, y, '25px ' + FONT, '#666'); y += 36; }
       const nums = CFG.show_price && l.p > 0 ? (l.o > l.p ? '🔥 ' : '') + l.q + ' × ' + fmt(l.p) + ' = ' + fmt(l.q * l.p) + ' ج' : 'الكمية: ' + l.q;
       T(nums, L, top + 30, 'bold 27px ' + FONT, '#0E6B5C', 'left');
+      if (imgs) y = Math.max(y, top - 30 + IMG + 6);
       y += 12; bar(y, '#f0f0f0', 2); y += 32;
     });
     y += 4; T('إجمالي القطع: ' + count(), R, y, 'bold 30px ' + FONT, '#111'); y += 52;
@@ -378,8 +390,17 @@ function buildInvoice(name, note) {
   const ctx = c.getContext('2d'); ctx.fillStyle = '#fff'; ctx.fillRect(0, 0, W, H);
   paint(ctx, false); return c;
 }
+function loadImg(src) {
+  return new Promise(res => { const im = new Image(); im.onload = () => res(im); im.onerror = () => res(null); im.src = src; });
+}
+async function loadInvoiceImgs() {
+  const imgs = {}, ids = Array.from(new Set(cart.map(l => l.id)));
+  await Promise.all(ids.map(async id => { imgs[id] = await loadImg(imgUrl(cart.find(l => l.id === id), 't')); }));
+  return imgs;
+}
 async function shareInvoice(name, note) {
-  const c = buildInvoice(name, note);
+  const imgs = await loadInvoiceImgs();
+  const c = buildInvoice(name, note, imgs);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
   const file = new File([blob], 'فاتورة-طرابيه.png', {type: 'image/png'});
   const text = orderText(name, note);
