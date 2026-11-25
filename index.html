@@ -326,7 +326,7 @@ function initStats() {
 function track(path, title) {
   try {
     if (window.goatcounter && window.goatcounter.count) window.goatcounter.count({path: path, title: title || '', event: true});
-    if (window.umami && window.umami.track) window.umami.track(title || path, {path: path});
+    if (window.umami && window.umami.track) window.umami.track(path.indexOf('order/') === 0 ? path : path.split('/')[0], {item: title || path});
   } catch (e) {}
 }
 
