@@ -4,6 +4,11 @@
 <meta charset="utf-8">
 <meta name="viewport" content="width=device-width, initial-scale=1, viewport-fit=cover">
 <meta name="theme-color" content="#0E6B5C">
+<meta name="description" content="كتالوج طرابيه للأدوات المنزلية - تصفح المنتجات والأسعار واطلب على واتساب">
+<meta property="og:type" content="website">
+<meta property="og:title" content="طرابيه للأدوات المنزلية">
+<meta property="og:description" content="تصفح المنتجات والأسعار واطلب على واتساب - توصيل مجاني داخل جمصة">
+<meta property="og:image" content="https://tarabihshop.github.io/icons/icon-192.png">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>طرابيه للأدوات المنزلية</title>
@@ -110,7 +115,12 @@ input.f,textarea.f{width:100%;border:0;background:#fff;border-radius:14px;paddin
   <input id="search" type="search" placeholder="🔍 ابحث بالاسم أو المقاس..." autocomplete="off">
   <div id="chips"></div>
   <div id="sizebar"><b>📏 المقاس:</b><div id="sizechips"></div></div>
-  <div id="count"></div>
+  <div style="display:flex;align-items:center;gap:8px;padding-bottom:6px">
+    <div id="count" style="flex:1"></div>
+    <select id="sort" style="background:#fff;border:0;border-radius:12px;padding:6px 10px;font-size:13px;font-family:inherit;color:var(--brand);font-weight:700">
+      <option value="">الترتيب: الافتراضي</option><option value="new">الأحدث</option><option value="low">الأرخص</option><option value="high">الأغلى</option>
+    </select>
+  </div>
   <div id="grid"></div>
   <div id="empty"></div>
   <div id="more"></div>
@@ -127,8 +137,8 @@ const DEF = {store:'طرابيه', sub:'للأدوات المنزلية',
   banner:'🚚 توصيل مجاني لأي فاتورة أكتر من 600 جنيه داخل جمصة', free_over:600,
   free_text:'🎉 توصيل مجاني داخل جمصة', hint_text:'🚚 ضيف {n} ج كمان ويبقى التوصيل مجاني داخل جمصة',
   whatsapp:'', wa_link:'https://wa.me/message/NO6AHUKPPHO3L1', show_price:true, min_price:4, new_days:14,
-  low_stock:5, limit_to_stock:true, notice:'', offers_first:true};
-let CFG = Object.assign({}, DEF), P = [], byId = {}, cart = [], cat = '', q = '', size = '', shown = 0, curList = [];
+  low_stock:5, limit_to_stock:true, notice:'', offers_first:true, show_qty:true};
+let CFG = Object.assign({}, DEF), P = [], byId = {}, cart = [], cat = '', q = '', size = '', shown = 0, curList = [], sortMode = '', extra = {phone: '', addr: ''};
 const PAGE = 60;
 const SIZE_RANGES = [
   {key:'17-20', label:'17–20', min:17, max:20},
@@ -140,14 +150,18 @@ const SIZE_RANGES = [
   {key:'46-50', label:'46–50', min:46, max:50}
 ];
 try { cart = JSON.parse(localStorage.getItem('tb_cart') || '[]'); } catch (e) { cart = []; }
+try { Object.assign(extra, JSON.parse(localStorage.getItem('tb_extra') || '{}')); } catch (e) {}
 const saveCart = () => { try { localStorage.setItem('tb_cart', JSON.stringify(cart)); } catch (e) {} renderBar(); };
 const esc = s => String(s == null ? '' : s).replace(/[&<>"']/g, c => ({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
 const fmt = n => { const r = Math.round(n * 10) / 10; return r % 1 === 0 ? String(Math.round(r)) : r.toFixed(1); };
+const fmtUpd = iso => { const d = new Date(iso); return isNaN(d) ? '' : d.toLocaleDateString('ar-EG') + ' ' + d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'}); };
+/* توحيد الحروف العربية للبحث: أ/إ/آ=ا ، ة=ه ، ى=ي ، وشيل التشكيل */
+const ar = s => String(s || '').toLowerCase().replace(/[\u064B-\u065F\u0670\u0640]/g, '').replace(/[أإآ]/g, 'ا').replace(/ة/g, 'ه').replace(/ى/g, 'ي');
 const h = s => { let x = 5381; s = String(s || ''); for (let i = 0; i < s.length; i++) x = ((x << 5) + x + s.charCodeAt(i)) | 0; return (x >>> 0).toString(36); };
 const count = () => cart.reduce((a, l) => a + l.q, 0);
 const total = () => cart.reduce((a, l) => a + l.p * l.q, 0);
 function toast(m) { const t = $('#toast'); t.textContent = m; t.style.display = 'block'; clearTimeout(toast.t); toast.t = setTimeout(() => t.style.display = 'none', 2600); }
-function stock(v) { if (v < 1) return ['نفدت الكمية', 'out']; if (v <= CFG.low_stock) return ['كمية قليلة: ' + fmt(v), 'low']; return ['متوفر: ' + fmt(v), 'ok']; }
+function stock(v) { const n = CFG.show_qty === false; if (v < 1) return ['نفدت الكمية', 'out']; if (v <= CFG.low_stock) return ['كمية قليلة' + (n ? '' : ': ' + fmt(v)), 'low']; return ['متوفر' + (n ? '' : ': ' + fmt(v)), 'ok']; }
 function isNew(cd) { const t = Date.parse(String(cd || '').replace(' ', 'T') + 'Z'); return !!t && (Date.now() - t) < CFG.new_days * 864e5; }
 const tok = l => String(l || '').split('/').map(s => s.trim()).filter(Boolean);
 function matchRange(label, rangeKey) {
@@ -184,7 +198,7 @@ function norm(raw) {
     const v = (p.v || []).filter(x => x.p >= CFG.min_price);
     if (!v.length) return null;
     let disc = 0; v.forEach(x => { if (x.o && x.o > x.p) disc = Math.max(disc, Math.round((x.o - x.p) / x.o * 100)); });
-    return Object.assign({}, p, {v: v, q: v.reduce((a, x) => a + x.q, 0), key: ((p.n || '') + ' ' + (p.c || '') + ' ' + (p.g || '') + ' ' + v.map(x => x.l || '').join(' ')).toLowerCase(), isNew: isNew(p.cd), off: disc > 0, disc: disc});
+    return Object.assign({}, p, {v: v, q: v.reduce((a, x) => a + x.q, 0), key: ar((p.n || '') + ' ' + (p.c || '') + ' ' + (p.g || '') + ' ' + v.map(x => x.l || '').join(' ')), isNew: isNew(p.cd), off: disc > 0, disc: disc});
   }).filter(Boolean).sort((a, b) => (CFG.offers_first ? (b.off - a.off) : 0) || String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
 }
 const imgUrl = (p, k) => k + '/' + p.id + '.jpg?v=' + h(p.w);
@@ -200,9 +214,13 @@ function card(p) {
 }
 function renderGrid() {
   curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
+  if (sortMode) {
+    const mp = p => Math.min.apply(null, p.v.map(x => x.p));
+    curList.sort(sortMode === 'low' ? (a, b) => mp(a) - mp(b) : sortMode === 'high' ? (a, b) => mp(b) - mp(a) : (a, b) => String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
+  }
   shown = Math.min(PAGE, curList.length);
   $('#grid').innerHTML = curList.slice(0, shown).map(card).join('');
-  $('#count').textContent = curList.length + ' منتج';
+  $('#count').textContent = curList.length + ' منتج' + (CFG.updated && fmtUpd(CFG.updated) ? ' • آخر تحديث: ' + fmtUpd(CFG.updated) : '');
   $('#empty').style.display = curList.length ? 'none' : 'block';
   $('#empty').textContent = P.length ? 'مفيش منتجات مطابقة للبحث' : '';
 }
@@ -239,17 +257,17 @@ function openProduct(id) {
     if (!isNaN(na) && !isNaN(nb)) return na - nb;
     return String(a.l || '').localeCompare(String(b.l || ''), 'ar');
   });
-  const want = (size || q || '').toLowerCase();
+  const want = ar(size || q || '');
   let sel = -1;
   if (size) sel = p.v.findIndex(v => v.q >= 1 && matchRange(v.l, size));
-  if (sel < 0 && want) sel = p.v.findIndex(v => v.q >= 1 && String(v.l || '').toLowerCase().indexOf(want) >= 0);
+  if (sel < 0 && want) sel = p.v.findIndex(v => v.q >= 1 && ar(v.l).indexOf(want) >= 0);
   if (sel < 0) sel = Math.max(0, p.v.findIndex(v => v.q >= 1));
   let qty = 1;
   const sizes = p.v.some(v => v.l);
   openSheet('<div class="bigbox"><img id="bigimg" alt="" src="' + imgUrl(p, 't') + '"></div><h2>' + esc(p.n) + '</h2><div id="dstock"></div>' +
     (CFG.show_price ? '<div id="dprice" class="pr big"></div>' : '') +
     (sizes ? '<div class="sec">📏 اختر المقاس / الخيار</div><div class="sizes" id="sizes"></div>' : '') +
-    '<div class="qrow"><span>الكمية</span><button id="qm">−</button><b id="qv">1</b><button id="qp">+</button></div><button class="btn main" id="add">🛒 أضف للطلب</button>');
+    '<div class="qrow"><span>الكمية</span><button id="qm">−</button><b id="qv">1</b><button id="qp">+</button></div><button class="btn main" id="add">🛒 أضف للطلب</button><button class="btn img" id="shr">🔗 شارك المنتج</button>');
   const big = new Image(); big.onload = () => { const el = $('#bigimg'); if (el) el.src = big.src; }; big.src = imgUrl(p, 'm');
   const maxQ = () => CFG.limit_to_stock ? Math.floor(p.v[sel].q) : 999;
   function refresh() {
@@ -259,13 +277,14 @@ function openProduct(id) {
     qty = Math.min(Math.max(1, qty), Math.max(1, maxQ())); $('#qv').textContent = qty;
     $('#add').disabled = CFG.limit_to_stock && v.q < 1;
     const sz = $('#sizes');
-    if (sz) sz.innerHTML = p.v.map((x, i) => '<button class="sz' + (i === sel ? ' on' : '') + (x.q < 1 ? ' out' : '') + '" data-i="' + i + '">' + esc(x.l || 'افتراضي') + ' · ' + fmt(x.q) + '</button>').join('');
+    if (sz) sz.innerHTML = p.v.map((x, i) => '<button class="sz' + (i === sel ? ' on' : '') + (x.q < 1 ? ' out' : '') + '" data-i="' + i + '">' + esc(x.l || 'افتراضي') + (CFG.show_qty === false ? '' : ' · ' + fmt(x.q)) + '</button>').join('');
   }
   $('#panel').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     if (b.classList.contains('sz')) { sel = +b.dataset.i; refresh(); }
     else if (b.id === 'qm') { qty = Math.max(1, qty - 1); refresh(); }
     else if (b.id === 'qp') { qty = Math.min(Math.max(1, maxQ()), qty + 1); refresh(); }
+    else if (b.id === 'shr') { shareProduct(p); }
     else if (b.id === 'add') {
       const v = p.v[sel], ex = cart.find(l => l.id === p.id && l.l === v.l), cap = maxQ();
       if (ex) ex.q = Math.min(cap, ex.q + qty); else cart.push({id: p.id, l: v.l, q: qty, n: p.n, p: v.p, o: v.o > v.p ? v.o : 0, w: p.w});
@@ -274,6 +293,15 @@ function openProduct(id) {
   };
   refresh();
 }
+
+async function shareProduct(p) {
+  const url = location.origin + location.pathname + '#p=' + p.id;
+  const text = p.n + (CFG.show_price ? ' - ' + priceText(p) : '');
+  if (navigator.share) { try { await navigator.share({title: CFG.store, text: text, url: url}); return; } catch (e) { if (e && e.name === 'AbortError') return; } }
+  try { await navigator.clipboard.writeText(text + '\n' + url); toast('✔ اتنسخ رابط المنتج'); }
+  catch (e) { window.open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank'); }
+}
+function openFromHash() { const m = /#p=(\d+)/.exec(location.hash); if (m && byId[+m[1]]) openProduct(+m[1]); }
 
 /* ---------- الطلب ---------- */
 function deliveryMsg() {
@@ -285,6 +313,8 @@ function deliveryMsg() {
 function orderText(name, note) {
   let s = '🛒 طلب جديد - ' + CFG.store + ' ' + CFG.sub + '\n';
   if (name) s += '👤 الاسم: ' + name + '\n';
+  if (extra.phone) s += '📞 التليفون: ' + extra.phone + '\n';
+  if (extra.addr) s += '📍 العنوان: ' + extra.addr + '\n';
   s += '────────────\n';
   cart.forEach((l, i) => {
     s += (i + 1) + ') ' + l.n + '\n';
@@ -318,10 +348,10 @@ function totalsHtml() {
 function openCart() {
   let name = ''; try { name = localStorage.getItem('tb_name') || ''; } catch (e) {}
   openSheet('<h2 style="margin-top:4px">🛒 طلبك</h2><div style="margin-top:10px" id="lines"></div><div id="tots"></div>' +
-    '<input class="f" id="cname" placeholder="اسمك (اختياري)" value="' + esc(name) + '"><textarea class="f" id="cnote" rows="2" placeholder="ملاحظات (اختياري)"></textarea>' +
+    '<input class="f" id="cname" placeholder="اسمك (اختياري)" value="' + esc(name) + '"><input class="f" id="cphone" type="tel" inputmode="tel" placeholder="رقم التليفون (اختياري)" value="' + esc(extra.phone) + '"><input class="f" id="caddr" placeholder="العنوان للتوصيل (اختياري)" value="' + esc(extra.addr) + '"><textarea class="f" id="cnote" rows="2" placeholder="ملاحظات (اختياري)"></textarea>' +
     '<button class="btn wa" id="sendtxt">📲 إرسال الطلب على واتساب</button><button class="btn img" id="sendimg">🖼️ إرسال الفاتورة كصورة</button><button class="btn del" id="clear">🗑️ مسح الطلب</button>');
   const redraw = () => { $('#lines').innerHTML = linesHtml(); $('#tots').innerHTML = totalsHtml(); };
-  const vals = () => { const n = $('#cname').value.trim(); try { localStorage.setItem('tb_name', n); } catch (e) {} return [n, $('#cnote').value.trim()]; };
+  const vals = () => { const n = $('#cname').value.trim(); extra.phone = $('#cphone').value.trim(); extra.addr = $('#caddr').value.trim(); try { localStorage.setItem('tb_name', n); localStorage.setItem('tb_extra', JSON.stringify(extra)); } catch (e) {} return [n, $('#cnote').value.trim()]; };
   $('#panel').onclick = e => {
     const b = e.target.closest('button'); if (!b) return;
     const i = +b.dataset.i;
@@ -356,6 +386,8 @@ function buildInvoice(name, note, imgs) {
     const d = new Date();
     T('التاريخ: ' + d.toLocaleDateString('ar-EG') + '  ' + d.toLocaleTimeString('ar-EG', {hour: '2-digit', minute: '2-digit'}), R, y, '26px ' + FONT, '#555'); y += 42;
     if (name) { T('العميل: ' + name, R, y, 'bold 29px ' + FONT, '#111'); y += 46; }
+    if (extra.phone) { T('التليفون: ' + extra.phone, R, y, '26px ' + FONT, '#333'); y += 40; }
+    if (extra.addr) { ctx.font = '26px ' + FONT; wrap(ctx, 'العنوان: ' + extra.addr, W - 2 * pad).forEach(ln => { T(ln, R, y, '26px ' + FONT, '#333'); y += 38; }); }
     y += 4; bar(y, '#e5e7eb', 3); y += 36;
     cart.forEach((l, i) => {
       ctx.font = 'bold 30px ' + FONT;
@@ -439,7 +471,7 @@ async function init() {
   try {
     const r = await fetch('catalog.json', {cache: 'no-cache'}); if (!r.ok) throw new Error('HTTP ' + r.status);
     P = norm(await r.json()); byId = {}; P.forEach(p => byId[p.id] = p);
-    renderChips(); renderSizes(); renderGrid();
+    renderChips(); renderSizes(); renderGrid(); openFromHash();
   } catch (e) { $('#empty').style.display = 'block'; $('#empty').textContent = 'تعذر تحميل الكتالوج - اتأكد من النت وجرّب تاني'; }
   if (CFG.notice && localStorage.getItem('tb_notice') !== h(CFG.notice)) { try { localStorage.setItem('tb_notice', h(CFG.notice)); } catch (e) {} setTimeout(() => alert(CFG.notice), 400); }
 }
@@ -447,8 +479,9 @@ $('#grid').addEventListener('click', e => { const c = e.target.closest('.card');
 $('#grid').addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.style.display = 'none'; }, true);
 $('#sizechips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { size = size === b.dataset.s ? '' : b.dataset.s; renderSizes(); renderGrid(); } });
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { cat = b.dataset.c; renderChips(); renderGrid(); } });
-let st; $('#search').addEventListener('input', e => { clearTimeout(st); st = setTimeout(() => { q = e.target.value.trim().toLowerCase(); renderGrid(); }, 150); });
+let st; $('#search').addEventListener('input', e => { clearTimeout(st); st = setTimeout(() => { q = ar(e.target.value.trim()); renderGrid(); }, 150); });
 $('#barbtn').addEventListener('click', openCart);
+$('#sort').addEventListener('change', e => { sortMode = e.target.value; renderGrid(); });
 $('#ov').addEventListener('click', () => closeSheet());
 $('#offline').addEventListener('click', prefetchAll);
 window.addEventListener('popstate', () => { if (sheetOpen) closeSheet(true); });
