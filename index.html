@@ -28,8 +28,13 @@ header .t{flex:1;line-height:1.2}header .t b{font-size:21px;display:block}header
 .wrap{max-width:1100px;margin:0 auto;padding:0 10px}
 #banner{margin:10px 2px 0;background:rgba(21,128,61,.12);color:var(--green);font-weight:700;font-size:13px;text-align:center;padding:9px 10px;border-radius:12px}
 #search{width:100%;margin-top:10px;border:0;background:#fff;border-radius:14px;padding:13px 16px;font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);font-family:inherit}
-#chips{display:flex;gap:8px;overflow-x:auto;padding:10px 2px;scrollbar-width:none}
+#qchips{display:flex;gap:8px;overflow-x:auto;padding:10px 2px 4px;scrollbar-width:none}
+#qchips::-webkit-scrollbar{display:none}
+#catwrap{position:relative}
+#chips{display:flex;gap:8px;overflow-x:auto;padding:6px 2px 10px;scrollbar-width:none}
 #chips::-webkit-scrollbar{display:none}
+#catwrap::after{content:'';position:absolute;top:0;bottom:0;left:0;width:36px;background:linear-gradient(to right,var(--page),rgba(246,244,239,0));pointer-events:none;transition:opacity .2s}
+#catwrap.end::after{opacity:0}
 .chip-c{flex:none;border:0;background:#fff;color:var(--brand);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:700}
 .chip-c.on{background:var(--brand);color:#fff}
 
@@ -106,7 +111,8 @@ input.f,textarea.f{width:100%;border:0;background:#fff;border-radius:14px;paddin
 <div class="wrap">
   <div id="banner" style="display:none"></div>
   <input id="search" type="search" placeholder="🔍 ابحث بالاسم أو المقاس..." autocomplete="off">
-  <div id="chips"></div>
+  <div id="qchips"></div>
+  <div id="catwrap"><div id="chips"></div></div>
   <div style="display:flex;gap:8px;padding-bottom:6px">
     <button id="fbtn" class="tool"></button>
     <select id="sort" class="tool">
@@ -225,10 +231,28 @@ function loadMore() {
   $('#grid').insertAdjacentHTML('beforeend', curList.slice(shown, to).map(card).join(''));
   shown = to;
 }
+function catFade() {
+  const el = $('#chips'), w = $('#catwrap');
+  w.classList.toggle('end', el.scrollWidth <= el.clientWidth + 4 || Math.abs(el.scrollLeft) + el.clientWidth >= el.scrollWidth - 4);
+}
+function nudgeChips() {  /* حركة صغيرة مرة في الجلسة تنبّه إن الأقسام بتتسحب */
+  const el = $('#chips');
+  if (el.scrollWidth <= el.clientWidth + 4) return;
+  try { if (sessionStorage.getItem('tb_nudge')) return; sessionStorage.setItem('tb_nudge', '1'); } catch (e) {}
+  el.scrollTo({left: -70, behavior: 'smooth'});
+  setTimeout(() => el.scrollTo({left: 0, behavior: 'smooth'}), 750);
+}
 function renderChips() {
-  const cats = [''].concat(favN() ? ['__fav__'] : [], P.some(p => p.bs) ? ['__top__'] : [], P.some(p => p.off) ? ['__offers__'] : [], Array.from(new Set(P.map(p => p.g))).sort());
-  if (cats.indexOf(cat) < 0) cat = '';
-  $('#chips').innerHTML = cats.map(c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + (c === '__fav__' ? '❤️ المفضلة (' + favN() + ')' : c === '__top__' ? '🏆 الأكثر مبيعًا' : c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل') + '</button>').join('');
+  const quick = [''].concat(favN() ? ['__fav__'] : [], P.some(p => p.bs) ? ['__top__'] : [], P.some(p => p.off) ? ['__offers__'] : []);
+  const groups = Array.from(new Set(P.map(p => p.g).filter(Boolean))).sort();
+  if (quick.indexOf(cat) < 0 && groups.indexOf(cat) < 0) cat = '';
+  const lab = c => c === '__fav__' ? '❤️ المفضلة (' + favN() + ')' : c === '__top__' ? '🏆 الأكثر مبيعًا' : c === '__offers__' ? '🔥 العروض' : c ? esc(c) : 'الكل';
+  const btn = c => '<button class="chip-c' + (c === cat ? ' on' : '') + '" data-c="' + esc(c) + '">' + lab(c) + '</button>';
+  const sl = $('#chips').scrollLeft;
+  $('#qchips').innerHTML = quick.map(btn).join('');
+  $('#chips').innerHTML = groups.map(btn).join('');
+  $('#chips').scrollLeft = sl;
+  catFade();
 }
 
 /* ---------- النافذة السفلية ---------- */
@@ -588,14 +612,16 @@ async function init() {
   try {
     const r = await fetch('catalog.json', {cache: 'no-cache'}); if (!r.ok) throw new Error('HTTP ' + r.status);
     P = norm(await r.json()); byId = {}; P.forEach(p => byId[p.id] = p);
-    renderChips(); renderSizes(); renderGrid(); openFromHash();
+    renderChips(); renderSizes(); renderGrid(); openFromHash(); setTimeout(nudgeChips, 600);
   } catch (e) { $('#empty').style.display = 'block'; $('#empty').textContent = 'تعذر تحميل الكتالوج - اتأكد من النت وجرّب تاني'; }
   if (CFG.notice && localStorage.getItem('tb_notice') !== h(CFG.notice)) { try { localStorage.setItem('tb_notice', h(CFG.notice)); } catch (e) {} setTimeout(() => alert(CFG.notice), 400); }
 }
 $('#grid').addEventListener('click', e => { const f = e.target.closest('.fv'); if (f) { toggleFav(+f.dataset.fv); return; } const c = e.target.closest('.card'); if (c) openProduct(+c.dataset.id); });
 $('#grid').addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.style.display = 'none'; }, true);
 $('#fbtn').addEventListener('click', openFilter);
-$('#chips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { cat = b.dataset.c; renderChips(); renderGrid(); } });
+const chipClick = e => { const b = e.target.closest('.chip-c'); if (b) { cat = b.dataset.c; renderChips(); renderGrid(); } };
+$('#chips').addEventListener('click', chipClick); $('#qchips').addEventListener('click', chipClick);
+$('#chips').addEventListener('scroll', catFade, {passive: true});
 let st, st2; $('#search').addEventListener('input', e => { const raw = e.target.value.trim(); clearTimeout(st); st = setTimeout(() => { q = ar(raw); renderGrid(); }, 150); clearTimeout(st2); st2 = setTimeout(() => { if (raw.length >= 2) track('search/' + raw, 'بحث: ' + raw); }, 1500); });
 $('#barbtn').addEventListener('click', openCart);
 $('#hist').addEventListener('click', openOrders);
@@ -607,9 +633,14 @@ if ('IntersectionObserver' in window) new IntersectionObserver(es => { if (es[0]
 /* ---------- تثبيت التطبيق ---------- */
 const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
 let dip;
-if (!isStandalone()) $('#install').style.display = 'block';  /* بنعرضه دايمًا إلا لو متثبّت، ولو المتصفح مادّاش إذن التثبيت بنشرح الطريقة */
-window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; });
-window.addEventListener('appinstalled', () => { dip = null; $('#install').style.display = 'none'; });
+/* لو الكتالوج اتفتح قبل كده كتطبيق مثبّت (نفس تخزين المتصفح على أندرويد) بنفتكر ده 4 شهور ونخفي الزرار */
+const wasInstalled = () => { try { const t = +localStorage.getItem('tb_inst'); return !!t && Date.now() - t < 120 * 86400000; } catch (e) { return false; } };
+const markInstalled = () => { try { localStorage.setItem('tb_inst', String(Date.now())); } catch (e) {} };
+if (isStandalone()) markInstalled();
+if (!isStandalone() && !wasInstalled()) $('#install').style.display = 'block';  /* بنعرضه دايمًا إلا لو متثبّت، ولو المتصفح مادّاش إذن التثبيت بنشرح الطريقة */
+/* وصول إذن التثبيت معناه إن التطبيق مش متثبّت (أو اتمسح) */
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; try { localStorage.removeItem('tb_inst'); } catch (er) {} $('#install').style.display = 'block'; });
+window.addEventListener('appinstalled', () => { markInstalled(); dip = null; $('#install').style.display = 'none'; });
 $('#install').addEventListener('click', async () => {
   if (dip) { dip.prompt(); try { await dip.userChoice; } catch (e) {} dip = null; return; }
   let framed = false; try { framed = window.top !== window; } catch (e) { framed = true; }
@@ -619,6 +650,7 @@ $('#install').addEventListener('click', async () => {
   else if (ios) how = 'افتح الرابط في <b>Safari</b>، واضغط زرار المشاركة ⬆️ تحت، واختار <b>«إضافة إلى الشاشة الرئيسية»</b>.';
   else how = 'اضغط على القايمة <b>⋮</b> (فوق في المتصفح) واختار <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.';
   openSheet('<h2 style="margin-top:4px">⬇️ تثبيت الكتالوج على موبايلك</h2><div class="tot" style="line-height:1.9">' + how + '</div>' +
+    (framed ? '' : '<div class="tot" style="color:var(--mut);line-height:1.8">💡 لو القايمة مفيهاش «تثبيت التطبيق»، يبقى الكتالوج <b>متثبّت عندك بالفعل</b> — دور على أيقونة «طرابيه» في الشاشة الرئيسية أو درج التطبيقات وافتحه منها.</div>') +
     (inApp && !framed ? '<div class="tot" style="color:var(--mut)">⚠️ إنت فاتح الرابط من جوه تطبيق (واتساب/فيسبوك)، والتثبيت بيشتغل أحسن من المتصفح نفسه. اضغط <b>⋮</b> واختار «فتح في Chrome» الأول.</div>' : '') +
     '<div class="tot" style="color:var(--mut)">بعد التثبيت بيفتح زي أي تطبيق، وبيشتغل من غير نت.</div>');
 });
