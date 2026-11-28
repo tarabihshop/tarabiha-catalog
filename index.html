@@ -9,19 +9,22 @@
 <meta property="og:title" content="طرابيه للأدوات المنزلية">
 <meta property="og:description" content="تصفح المنتجات والأسعار واطلب على واتساب - توصيل مجاني داخل جمصة">
 <meta property="og:image" content="https://tarabihshop.github.io/icons/icon-192.png">
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+<link rel="stylesheet" href="https://fonts.googleapis.com/css2?family=Tajawal:wght@400;500;700;800&display=swap">
 <link rel="manifest" href="manifest.webmanifest">
 <link rel="apple-touch-icon" href="icons/icon-192.png">
 <title>طرابيه للأدوات المنزلية</title>
 <style>
 :root{--brand:#0E6B5C;--page:#F6F4EF;--ink:#1F2937;--mut:#6B7280;--field:#EFEDE7;--amber:#F59E0B;--red:#DC2626;--orange:#D97706;--green:#15803D;--wa:#25D366}
 *{box-sizing:border-box;-webkit-tap-highlight-color:transparent}
-body{margin:0;font-family:"Segoe UI",Tahoma,Arial,sans-serif;background:var(--page);color:var(--ink);padding-bottom:90px}
+body{margin:0;font-family:Tajawal,"Segoe UI",Tahoma,Arial,sans-serif;background:var(--page);color:var(--ink);padding-bottom:90px}
 button{font-family:inherit;cursor:pointer}
 header{background:var(--brand);color:#fff;padding:calc(10px + env(safe-area-inset-top)) 14px 10px;display:flex;align-items:center;gap:10px;position:sticky;top:0;z-index:5}
 header img{width:42px;height:42px;border-radius:10px}
 header .t{flex:1;line-height:1.2}header .t b{font-size:21px;display:block}header .t small{opacity:.8;font-size:12px}
-#install{display:none;background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:12px;padding:8px 12px;font-size:13px}
-#hist{display:none;position:absolute;left:50%;top:calc(50% + env(safe-area-inset-top) / 2);transform:translate(-50%,-50%);white-space:nowrap;background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:12px;padding:8px 14px;font-size:14px}
+#install{display:none;position:absolute;left:50%;top:calc(50% + env(safe-area-inset-top) / 2);transform:translate(-50%,-50%);white-space:nowrap;background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:12px;padding:8px 14px;font-size:14px}
+#hist{display:none;white-space:nowrap;background:rgba(255,255,255,.2);color:#fff;border:0;border-radius:12px;padding:8px 12px;font-size:13px}
 .wrap{max-width:1100px;margin:0 auto;padding:0 10px}
 #banner{margin:10px 2px 0;background:rgba(21,128,61,.12);color:var(--green);font-weight:700;font-size:13px;text-align:center;padding:9px 10px;border-radius:12px}
 #search{width:100%;margin-top:10px;border:0;background:#fff;border-radius:14px;padding:13px 16px;font-size:16px;box-shadow:0 1px 3px rgba(0,0,0,.08);font-family:inherit}
@@ -30,35 +33,21 @@ header .t{flex:1;line-height:1.2}header .t b{font-size:21px;display:block}header
 .chip-c{flex:none;border:0;background:#fff;color:var(--brand);border-radius:20px;padding:8px 14px;font-size:13px;font-weight:700}
 .chip-c.on{background:var(--brand);color:#fff}
 
-/* شريط مجموعات المقاسات على سطرين داخل الصفحة */
-#sizebar{display:none;align-items:flex-start;gap:8px;padding:0 2px 10px}
-#sizebar b{flex:none;font-size:13px;color:var(--mut);padding-top:8px}
-#sizechips{
-  display:grid;
-  grid-template-columns:repeat(4, minmax(0, 1fr));
-  gap:6px;
-  flex:1;
-}
-#sizechips .chip-c{
-  flex:initial;
-  width:100%;
-  padding:7px 6px;
-  font-size:12px;
-  border-radius:12px;
-  text-align:center;
-  white-space:nowrap;
-}
-
-#count{color:var(--mut);font-size:12px;padding:0 4px 6px}
+#count{color:var(--mut);font-size:12px;padding:0 4px 8px}
+.tool{flex:1;background:#fff;border:0;border-radius:12px;padding:10px 12px;font-size:13px;font-weight:700;color:var(--brand);text-align:center;text-align-last:center;box-shadow:0 1px 2px rgba(0,0,0,.06);font-family:inherit;display:flex;align-items:center;justify-content:center;gap:6px}
+select.tool{display:block}
+.fcnt{min-width:18px;border-radius:9px;background:var(--brand);color:#fff;font-size:11px;padding:0 5px;line-height:18px}
 #grid{display:grid;grid-template-columns:repeat(auto-fill,minmax(155px,1fr));gap:10px}
-.card{background:#fff;border-radius:18px;padding:8px 8px 10px;box-shadow:0 1px 3px rgba(0,0,0,.08);cursor:pointer;display:flex;flex-direction:column}
-.imgbox{position:relative;aspect-ratio:1/1;background:var(--field);border-radius:14px;overflow:hidden}
-.imgbox::before{content:'🏠';position:absolute;inset:0;display:flex;align-items:center;justify-content:center;font-size:42px;opacity:.25}
-.imgbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;background:var(--field)}
-.fv{position:absolute;bottom:6px;left:6px;width:36px;height:36px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.92);font-size:18px;line-height:36px;text-align:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.25);cursor:pointer}
-.new{position:absolute;top:6px;right:6px;background:var(--amber);color:#1F2937;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
-.bs{position:absolute;bottom:6px;right:6px;background:#FFF3CD;color:#7a5200;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
-.off{position:absolute;top:6px;left:6px;background:var(--red);color:#fff;font-size:11px;font-weight:800;padding:3px 8px;border-radius:10px;z-index:1}
+.card{background:#fff;border-radius:18px;padding:8px 8px 10px;box-shadow:0 1px 2px rgba(16,24,40,.06),0 4px 14px rgba(16,24,40,.05);cursor:pointer;display:flex;flex-direction:column;transition:transform .12s}
+.card:active{transform:scale(.985)}
+.imgbox{position:relative;isolation:isolate;aspect-ratio:1/1;background:linear-gradient(90deg,#EFEDE7 0,#F8F6F1 50%,#EFEDE7 100%);background-size:200% 100%;animation:sk 1.3s linear infinite;border-radius:14px;overflow:hidden}
+.imgbox.ld{animation:none;background:#F4F2ED}
+@keyframes sk{to{background-position:-200% 0}}
+.imgbox img{position:absolute;inset:0;width:100%;height:100%;object-fit:contain;mix-blend-mode:multiply;opacity:0;transition:opacity .35s}
+.imgbox img.ok{opacity:1}
+.fv{position:absolute;bottom:8px;left:8px;width:32px;height:32px;padding:0;border:0;border-radius:50%;background:rgba(255,255,255,.92);font-size:16px;line-height:32px;text-align:center;z-index:2;box-shadow:0 1px 3px rgba(0,0,0,.2);cursor:pointer}
+.bd{position:absolute;top:8px;right:8px;font-size:11px;font-weight:800;padding:2px 9px;border-radius:999px;z-index:1;line-height:1.6}
+.bd.off{background:var(--red);color:#fff}.bd.new{background:var(--amber);color:#1F2937}.bd.bs{background:#FFF3CD;color:#7a5200}
 .old{color:#9CA3AF;text-decoration:line-through;font-weight:600;font-size:12px;margin-left:6px}
 .nm{font-weight:700;font-size:14px;margin-top:8px;line-height:1.35;height:2.7em;overflow:hidden;display:-webkit-box;-webkit-line-clamp:2;-webkit-box-orient:vertical}
 .pr{color:var(--brand);font-weight:800;font-size:15px;margin-top:2px}
@@ -118,13 +107,13 @@ input.f,textarea.f{width:100%;border:0;background:#fff;border-radius:14px;paddin
   <div id="banner" style="display:none"></div>
   <input id="search" type="search" placeholder="🔍 ابحث بالاسم أو المقاس..." autocomplete="off">
   <div id="chips"></div>
-  <div id="sizebar"><b>📏 المقاس:</b><div id="sizechips"></div></div>
-  <div style="display:flex;align-items:center;gap:8px;padding-bottom:6px">
-    <div id="count" style="flex:1"></div>
-    <select id="sort" style="background:#fff;border:0;border-radius:12px;padding:6px 10px;font-size:13px;font-family:inherit;color:var(--brand);font-weight:700">
+  <div style="display:flex;gap:8px;padding-bottom:6px">
+    <button id="fbtn" class="tool"></button>
+    <select id="sort" class="tool">
       <option value="">الترتيب: الافتراضي</option><option value="new">الأحدث</option><option value="top">الأكثر مبيعًا</option><option value="low">الأرخص</option><option value="high">الأغلى</option>
     </select>
   </div>
+  <div id="count"></div>
   <div id="grid"></div>
   <div id="empty"></div>
   <div id="more"></div>
@@ -142,7 +131,7 @@ const DEF = {store:'طرابيه', sub:'للأدوات المنزلية',
   free_text:'🎉 توصيل مجاني داخل جمصة', hint_text:'🚚 ضيف {n} ج كمان ويبقى التوصيل مجاني داخل جمصة',
   whatsapp:'', wa_link:'https://wa.me/message/NO6AHUKPPHO3L1', show_price:true, min_price:4, new_days:14,
   low_stock:5, limit_to_stock:true, notice:'', offers_first:true, show_qty:true, product_pages:true};
-let CFG = Object.assign({}, DEF), P = [], byId = {}, cart = [], cat = '', q = '', size = '', shown = 0, curList = [], sortMode = '', extra = {phone: '', addr: ''};
+let CFG = Object.assign({}, DEF), P = [], byId = {}, cart = [], cat = '', q = '', size = '', prange = null, shown = 0, curList = [], sortMode = '', extra = {phone: '', addr: ''};
 const PAGE = 60;
 const SIZE_RANGES = [
   {key:'17-20', label:'17–20', min:17, max:20},
@@ -184,14 +173,9 @@ function sizeList(p) {
   return a.length ? a.slice(0, 4).join(' · ') + (a.length > 4 ? ' …' : '') : p.v.length + ' مقاسات/خيارات';
 }
 function renderSizes() {
-  const avail = SIZE_RANGES.filter(r =>
-    P.some(p => p.v.some(v => v.q >= 1 && matchRange(v.l, r.key)))
-  );
-  $('#sizebar').style.display = avail.length ? 'flex' : 'none';
+  const avail = SIZE_RANGES.filter(r => P.some(p => p.v.some(v => v.q >= 1 && matchRange(v.l, r.key))));
   if (size && !avail.some(r => r.key === size)) size = '';
-  $('#sizechips').innerHTML = avail.map(r =>
-    '<button class="chip-c' + (r.key === size ? ' on' : '') + '" data-s="' + esc(r.key) + '">' + esc(r.label) + '</button>'
-  ).join('');
+  renderFilterBtn();
 }
 function priceHtml(p) {
   if (!CFG.show_price) return '';
@@ -210,16 +194,20 @@ function norm(raw) {
 const imgUrl = (p, k) => k + '/' + p.id + '.jpg?v=' + h(p.w);
 
 /* ---------- الشبكة ---------- */
+function badge(p) {
+  const b = p.off ? ['off', 'خصم ' + p.disc + '%'] : p.isNew ? ['new', 'جديد'] : p.bs ? ['bs', 'الأكثر مبيعًا'] : null;
+  return b ? '<span class="bd ' + b[0] + '">' + b[1] + '</span>' : '';
+}
 function card(p) {
   const s = stock(p.q);
-  return '<div class="card" data-id="' + p.id + '"><div class="imgbox"><img loading="lazy" decoding="async" alt="" src="' + imgUrl(p, 't') + '">' +
-    (p.isNew ? '<span class="new">🆕 جديد</span>' : '') + (p.off ? '<span class="off">🔥 عرض -' + p.disc + '%</span>' : '') + (p.bs ? '<span class="bs">🏆 الأكثر مبيعًا</span>' : '') + '<button class="fv" aria-label="مفضلة" data-fv="' + p.id + '">' + (favs.has(p.id) ? '❤️' : '🤍') + '</button></div><div class="nm">' + esc(p.n) + '</div>' +
+  return '<div class="card" data-id="' + p.id + '"><div class="imgbox"><img loading="lazy" decoding="async" alt="" src="' + imgUrl(p, 't') + '" onload="this.className=\'ok\';this.parentNode.classList.add(\'ld\')" onerror="this.parentNode.classList.add(\'ld\')">' +
+    badge(p) + '<button class="fv" aria-label="مفضلة" data-fv="' + p.id + '">' + (favs.has(p.id) ? '❤️' : '🤍') + '</button></div><div class="nm">' + esc(p.n) + '</div>' +
     priceHtml(p) +
     '<span class="chip ' + s[1] + '">' + s[0] + '</span>' +
     (p.v.length > 1 ? '<div class="mut">📏 ' + esc(sizeList(p)) + '</div>' : '') + '</div>';
 }
 function renderGrid() {
-  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : cat === '__fav__' ? favs.has(p.id) : cat === '__top__' ? !!p.bs : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))));
+  curList = P.filter(p => (!cat || (cat === '__offers__' ? p.off : cat === '__fav__' ? favs.has(p.id) : cat === '__top__' ? !!p.bs : p.g === cat)) && (!q || p.key.indexOf(q) >= 0) && (!size || p.v.some(v => v.q >= 1 && matchRange(v.l, size))) && (prange === null || p.v.some(v => v.q >= 1 && v.p >= PRICE_RANGES[prange].min && v.p < PRICE_RANGES[prange].max)));
   if (sortMode) {
     const mp = p => Math.min.apply(null, p.v.map(x => x.p));
     curList.sort(sortMode === 'low' ? (a, b) => mp(a) - mp(b) : sortMode === 'high' ? (a, b) => mp(b) - mp(a) : sortMode === 'top' ? (a, b) => (a.bs || 9999) - (b.bs || 9999) : (a, b) => String(b.cd || '').localeCompare(String(a.cd || '')) || b.id - a.id);
@@ -312,6 +300,36 @@ async function shareProduct(p) {
   catch (e) { window.open('https://wa.me/?text=' + encodeURIComponent(text + '\n' + url), '_blank'); }
 }
 function openFromHash() { const m = /#p=(\d+)/.exec(location.hash); if (m && byId[+m[1]]) openProduct(+m[1]); }
+
+/* ---------- التصفية (المقاس + السعر) ---------- */
+const PRICE_RANGES = [{label: 'أقل من 50 ج', min: 0, max: 50}, {label: '50 – 150 ج', min: 50, max: 150}, {label: '150 – 500 ج', min: 150, max: 500}, {label: '500 – 1000 ج', min: 500, max: 1000}, {label: 'أكتر من 1000 ج', min: 1000, max: Infinity}];
+const FILTER_ICON = '<svg width="14" height="14" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2.4" stroke-linecap="round"><path d="M3 6h18M7 12h10M10 18h4"/></svg>';
+function renderFilterBtn() {
+  const n = (size ? 1 : 0) + (prange !== null ? 1 : 0);
+  $('#fbtn').innerHTML = FILTER_ICON + '<span>تصفية</span>' + (n ? '<span class="fcnt">' + n + '</span>' : '');
+}
+function openFilter() {
+  const avail = SIZE_RANGES.filter(r => P.some(p => p.v.some(v => v.q >= 1 && matchRange(v.l, r.key))));
+  openSheet('<h2 style="margin-top:4px">تصفية المنتجات</h2>' +
+    (avail.length ? '<div class="sec">المقاس</div><div class="sizes" id="fsz">' + avail.map(r => '<button class="sz" data-s="' + esc(r.key) + '">' + esc(r.label) + '</button>').join('') + '</div>' : '') +
+    (CFG.show_price !== false ? '<div class="sec">السعر</div><div class="sizes" id="fpr">' + PRICE_RANGES.map((r, i) => '<button class="sz" data-p="' + i + '">' + r.label + '</button>').join('') + '</div>' : '') +
+    '<button class="btn main" id="fok"></button><button class="btn img" id="fclr">مسح التصفية</button>');
+  const sync = () => {
+    document.querySelectorAll('#fsz .sz').forEach(b => b.classList.toggle('on', b.dataset.s === size));
+    document.querySelectorAll('#fpr .sz').forEach(b => b.classList.toggle('on', +b.dataset.p === prange));
+    $('#fok').textContent = curList.length ? 'عرض ' + curList.length + ' منتج' : 'مفيش منتجات بالاختيار ده';
+  };
+  sync();
+  $('#panel').onclick = e => {
+    const b = e.target.closest('button'); if (!b) return;
+    if (b.dataset.s != null) size = size === b.dataset.s ? '' : b.dataset.s;
+    else if (b.dataset.p != null) prange = prange === +b.dataset.p ? null : +b.dataset.p;
+    else if (b.id === 'fclr') { size = ''; prange = null; }
+    else if (b.id === 'fok') { closeSheet(); return; }
+    else return;
+    renderFilterBtn(); renderGrid(); sync();
+  };
+}
 
 /* ---------- المفضلة (على جهاز العميل) ---------- */
 const favN = () => Array.from(favs).filter(id => byId[id]).length;
@@ -466,7 +484,7 @@ function openCart() {
 
 /* ---------- الفاتورة كصورة ---------- */
 function buildInvoice(name, note, imgs) {
-  const W = 900, pad = 36, FONT = '"Segoe UI",Tahoma,Arial,sans-serif';
+  const W = 900, pad = 36, FONT = 'Tajawal,"Segoe UI",Tahoma,Arial,sans-serif';
   const IMG = 120, GAP = 16; /* حجم صورة المنتج في الفاتورة */
   function wrap(ctx, text, maxW) {
     const words = String(text).split(/\s+/), lines = []; let cur = '';
@@ -530,6 +548,7 @@ async function loadInvoiceImgs() {
   return imgs;
 }
 async function shareInvoice(name, note) {
+  try { if (document.fonts) await Promise.all([document.fonts.load('400 26px Tajawal'), document.fonts.load('700 30px Tajawal')]); } catch (e) {}
   const imgs = await loadInvoiceImgs();
   const c = buildInvoice(name, note, imgs);
   const blob = await new Promise(r => c.toBlob(r, 'image/png'));
@@ -575,7 +594,7 @@ async function init() {
 }
 $('#grid').addEventListener('click', e => { const f = e.target.closest('.fv'); if (f) { toggleFav(+f.dataset.fv); return; } const c = e.target.closest('.card'); if (c) openProduct(+c.dataset.id); });
 $('#grid').addEventListener('error', e => { if (e.target && e.target.tagName === 'IMG') e.target.style.display = 'none'; }, true);
-$('#sizechips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { size = size === b.dataset.s ? '' : b.dataset.s; renderSizes(); renderGrid(); } });
+$('#fbtn').addEventListener('click', openFilter);
 $('#chips').addEventListener('click', e => { const b = e.target.closest('.chip-c'); if (b) { cat = b.dataset.c; renderChips(); renderGrid(); } });
 let st, st2; $('#search').addEventListener('input', e => { const raw = e.target.value.trim(); clearTimeout(st); st = setTimeout(() => { q = ar(raw); renderGrid(); }, 150); clearTimeout(st2); st2 = setTimeout(() => { if (raw.length >= 2) track('search/' + raw, 'بحث: ' + raw); }, 1500); });
 $('#barbtn').addEventListener('click', openCart);
@@ -585,8 +604,24 @@ $('#ov').addEventListener('click', () => closeSheet());
 $('#offline').addEventListener('click', prefetchAll);
 window.addEventListener('popstate', () => { if (sheetOpen) closeSheet(true); });
 if ('IntersectionObserver' in window) new IntersectionObserver(es => { if (es[0].isIntersecting) loadMore(); }, {rootMargin: '600px'}).observe($('#more'));
-let dip; window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; $('#install').style.display = 'block'; });
-$('#install').addEventListener('click', async () => { if (dip) { dip.prompt(); await dip.userChoice; dip = null; $('#install').style.display = 'none'; } });
+/* ---------- تثبيت التطبيق ---------- */
+const isStandalone = () => (window.matchMedia && matchMedia('(display-mode: standalone)').matches) || navigator.standalone === true;
+let dip;
+if (!isStandalone()) $('#install').style.display = 'block';  /* بنعرضه دايمًا إلا لو متثبّت، ولو المتصفح مادّاش إذن التثبيت بنشرح الطريقة */
+window.addEventListener('beforeinstallprompt', e => { e.preventDefault(); dip = e; });
+window.addEventListener('appinstalled', () => { dip = null; $('#install').style.display = 'none'; });
+$('#install').addEventListener('click', async () => {
+  if (dip) { dip.prompt(); try { await dip.userChoice; } catch (e) {} dip = null; return; }
+  let framed = false; try { framed = window.top !== window; } catch (e) { framed = true; }
+  const ua = navigator.userAgent || '', ios = /iPhone|iPad|iPod/i.test(ua), inApp = /FBAN|FBAV|Instagram|WhatsApp|Line\/|Snapchat|; wv\)/i.test(ua);
+  let how;
+  if (framed) how = 'التثبيت مش بيشتغل من جوه موقع تاني. افتح <a href="' + location.href.split('#')[0] + '" target="_blank"><b>الرابط المباشر للكتالوج</b></a> وبعدين اضغط «ثبّت».';
+  else if (ios) how = 'افتح الرابط في <b>Safari</b>، واضغط زرار المشاركة ⬆️ تحت، واختار <b>«إضافة إلى الشاشة الرئيسية»</b>.';
+  else how = 'اضغط على القايمة <b>⋮</b> (فوق في المتصفح) واختار <b>«تثبيت التطبيق»</b> أو <b>«إضافة إلى الشاشة الرئيسية»</b>.';
+  openSheet('<h2 style="margin-top:4px">⬇️ تثبيت الكتالوج على موبايلك</h2><div class="tot" style="line-height:1.9">' + how + '</div>' +
+    (inApp && !framed ? '<div class="tot" style="color:var(--mut)">⚠️ إنت فاتح الرابط من جوه تطبيق (واتساب/فيسبوك)، والتثبيت بيشتغل أحسن من المتصفح نفسه. اضغط <b>⋮</b> واختار «فتح في Chrome» الأول.</div>' : '') +
+    '<div class="tot" style="color:var(--mut)">بعد التثبيت بيفتح زي أي تطبيق، وبيشتغل من غير نت.</div>');
+});
 if ('serviceWorker' in navigator) navigator.serviceWorker.register('sw.js').catch(() => {});
 window.__tb = {norm, orderText, deliveryMsg, buildInvoice, tok, sizeList, set: (c, p, ct) => { CFG = Object.assign({}, DEF, c); P = norm(p); cart = ct; }};
 init();
