@@ -28,8 +28,13 @@
   "min_drop_percent": 5,
   "manual": {}
  },
+ "bought_together": {
+  "days": 90,
+  "min_count": 2,
+  "max": 4
+ },
  "recent_source": [
   "purchase"
  ],
- "updated": "2026-11-28T13:53:08Z"
+ "updated": "2026-11-28T14:47:38Z"
 }
